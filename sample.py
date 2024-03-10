@@ -60,22 +60,22 @@ geojson = {
             "name": "escooter",
             "icon": "marker",
             "iconstyle": {
-                "iconUrl": 'https://deton.github.io/folium_tripslayer/escooter.svg',
+                "iconUrl": 'https://deton.github.io/folium_tripslayer/walk.svg',
                 "iconSize": [22, 22],
                 "iconAnchor": [11, 11]
             },
             "style": {
-                "color": "MediumAquamarine",
+                "color": "salmon",
             },
-            "sliceStyles": [[0, 5, "styleWalk"], [11, 17, "styleWalk"]],
-            "styleWalk": {
+            "sliceStyles": [[5, 11, "styleEscooter"]],
+            "styleEscooter": {
                 "iconstyle": {
-                    "iconUrl": 'https://deton.github.io/folium_tripslayer/walk.svg',
+                    "iconUrl": 'https://deton.github.io/folium_tripslayer/escooter.svg',
                     "iconSize": [22, 22],
                     "iconAnchor": [11, 11]
                 },
                 "style": {
-                    "color": "salmon",
+                    "color": "MediumAquamarine",
                 },
             },
             "times": [
