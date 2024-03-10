@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "folium_tripslayer"
+dynamic = ["version"]
+description = 'Folium plugin to show moving icon along with TimestampedGeoJson LineString.'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "KIHARA Hideto", email = "deton@m1.interq.or.jp" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/deton/folium_tripslayer#readme"
+Issues = "https://github.com/deton/folium_tripslayer/issues"
+Source = "https://github.com/deton/folium_tripslayer"
+
+[tool.hatch.version]
+path = "src/folium_tripslayer/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+]
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.types]
+dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/folium_tripslayer tests}"
+
+[tool.coverage.run]
+source_pkgs = ["folium_tripslayer", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/folium_tripslayer/__about__.py",
+]
+
+[tool.coverage.paths]
+folium_tripslayer = ["src/folium_tripslayer", "*/folium_tripslayer/src/folium_tripslayer"]
+tests = ["tests", "*/folium_tripslayer/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
