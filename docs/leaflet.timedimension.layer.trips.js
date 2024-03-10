@@ -7,18 +7,6 @@ L.timeDimension.layer.trips = function() {
     return { addTripsLayers };
 
     function addTripsLayers(map, geojson, duration) {
-        // slice features array if properties has
-        // "sliceStyles": [[2, 4, 'styleBus']],
-        // "styleBus": {
-        //     "style": {
-        //         "color": "MediumAquamarine"
-        //     },
-        //     "iconstyle": {
-        //         "iconUrl": "bus.png",
-        //         "iconSize": [22, 22],
-        //         "iconAnchor": [11, 11]
-        //     }
-        // }
         iconjson = {
             type: 'FeatureCollection',
             features: []
@@ -33,6 +21,48 @@ L.timeDimension.layer.trips = function() {
                 linejson.features.push(f);
                 return;
             }
+            // TODO: support 'coordTimes', etc.
+            // cf. L.TimeDimension.Layer.GeoJson._getFeatureTimes()
+            f.properties.times = f.properties.times.map(time => {
+                if (typeof time == 'string' || time instanceof String) {
+                    return Date.parse(time.trim());
+                }
+                return time;
+            });
+            // slice features array if properties has
+            // "sliceStyles": [[2, 4, 'styleBus']],
+            // "styleBus": {
+            //     "style": {
+            //         "color": "MediumAquamarine"
+            //     },
+            //     "iconstyle": {
+            //         "iconUrl": "bus.png",
+            //         "iconSize": [22, 22],
+            //         "iconAnchor": [11, 11]
+            //     }
+            // }
+            // iconjson: convert index to time
+            const timeStyles = f.properties.sliceStyles.map(ss => {
+                let endIdx = ss[1];
+                while (endIdx >= f.properties.times.length) {
+                    endIdx -= 1;
+                }
+                return [
+                    f.properties.times[ss[0]],
+                    f.properties.times[endIdx],
+                    ss[2],
+                ];
+            });
+            iconjson.features.push({
+                type: 'Feature',
+                properties: {
+                    ...f.properties,
+                    timeStyles,
+                },
+                geometry: f.geometry,
+            });
+
+            // linejson
             let idx = 0;
             f.properties.sliceStyles.forEach(ss => {
                 if (ss[0] > idx) {
@@ -52,7 +82,10 @@ L.timeDimension.layer.trips = function() {
                 const coords = f.geometry.coordinates.slice(startIdx, endIdx);
                 // TODO: support 'coordTimes', etc.
                 const times = f.properties.times.slice(startIdx, endIdx);
-                iconjson.features.push({
+                // show whole LineString
+                times[0] = f.properties.times[0];
+                times[times.length - 1] = f.properties.times[f.properties.times.length - 1];
+                linejson.features.push({
                     type: 'Feature',
                     properties: {
                         ...f.properties,
@@ -64,39 +97,33 @@ L.timeDimension.layer.trips = function() {
                         coordinates: coords,
                     }
                 });
-                // show whole LineString
-                const times4line = [...times];
-                times4line[0] = f.properties.times[0];
-                times4line[times.length - 1] = f.properties.times[f.properties.times.length - 1];
-                linejson.features.push({
-                    type: 'Feature',
-                    properties: {
-                        ...f.properties,
-                        ...overrideStyle,
-                        times4line,
-                    },
-                    geometry: {
-                        type: f.geometry.type,
-                        coordinates: coords,
-                    }
-                });
             }
         });
 
         var iconLayer = L.geoJson(iconjson, {
             pointToLayer: function (feature, latLng) {
+                let iconstyle = feature.properties.iconstyle;
+                if (iconstyle && feature.properties.timeStyles) {
+                    //console.log(feature.properties.timeStyles);
+                    const cur = map.timeDimension.getCurrentTime();
+                    feature.properties.timeStyles.some(ts => {
+                        if (cur >= ts[0] && cur < ts[1]) {
+                            iconstyle = feature.properties[ts[2]].iconstyle;
+                            return true;
+                        }
+                    });
+                }
                 if (feature.properties.icon == 'marker') {
-                    if (feature.properties.iconstyle){
-                        //console.log('current', map.timeDimension.getCurrentTime());
+                    if (iconstyle) {
                         return new L.Marker(latLng, {
-                            icon: L.icon(feature.properties.iconstyle)
+                            icon: L.icon(iconstyle)
                         });
                     }
                     return new L.Marker(latLng);
                 }
                 if (feature.properties.icon == 'circle') {
-                    if (feature.properties.iconstyle) {
-                        return new L.circleMarker(latLng, feature.properties.iconstyle);
+                    if (iconstyle) {
+                        return new L.circleMarker(latLng, iconstyle);
                     }
                     return new L.circleMarker(latLng);
                 }
