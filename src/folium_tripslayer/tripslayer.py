@@ -15,7 +15,7 @@ class TripsLayer(TimestampedGeoJson):
             L.Control.TimeDimensionCustom = L.Control.TimeDimension.extend({
                 _getDisplayDateFormat: function(date){
                     var newdate = new moment(date);
-                    console.log(newdate)
+                    //console.log(newdate)
                     return newdate.format("{{this.date_options}}");
                 }
             });
@@ -42,7 +42,8 @@ class TripsLayer(TimestampedGeoJson):
         ),
         (
             "leaflet.timedimension",
-            "https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js",
+            "http://localhost:8000/leaflet.timedimension.min.js",
+            #"https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js",
         ),
         # noqa
         (
@@ -62,7 +63,7 @@ class TripsLayer(TimestampedGeoJson):
     def __init__(
         self,
         data,
-        transition_time=200,
+        transition_time=400,
         loop=True,
         auto_play=True,
         add_last_point=False,
