@@ -42,7 +42,7 @@ class TripsLayer(TimestampedGeoJson):
         ),
         (
             "leaflet.timedimension",
-            "http://localhost:8000/leaflet.timedimension.min.js",
+            "https://deton.github.io/folium_tripslayer/leaflet.timedimension.min.js",
             #"https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js",
         ),
         # noqa
@@ -52,11 +52,11 @@ class TripsLayer(TimestampedGeoJson):
         ),
         (
             "Leaflet.TimeDimension.Layer.GeoJsonWhole",
-            "http://localhost:8000/leaflet.timedimension.layer.geojsonwhole.js",
+            "https://deton.github.io/folium_tripslayer/leaflet.timedimension.layer.geojsonwhole.js",
         ),
         (
             "Leaflet.TimeDimension.Layer.Trips",
-            "http://localhost:8000/leaflet.timedimension.layer.trips.js",
+            "https://deton.github.io/folium_tripslayer/leaflet.timedimension.layer.trips.js",
         )
     ]
 
@@ -64,7 +64,7 @@ class TripsLayer(TimestampedGeoJson):
         self,
         data,
         transition_time=400,
-        loop=True,
+        loop=False,
         auto_play=True,
         add_last_point=False,
         period="PT1M",
