@@ -47,7 +47,8 @@ class TripsLayer(TimestampedGeoJson):
         ),
         (
             "leaflet.timedimension",
-            "https://deton.github.io/folium_tripslayer/leaflet.timedimension.min.js",
+            "https://deton.github.io/Leaflet.TimeDimension/dist/leaflet.timedimension.min.js"
+            # XXX: some fixes not released yet
             #"https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js",
         ),
         # noqa
