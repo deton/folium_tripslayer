@@ -16,6 +16,23 @@ geojson = {
     "features": [{
         "type": "Feature",
         "properties": {
+            "name": "car origin point",
+            "times": [
+                "2019-11-23 10:51:06"
+            ],
+            "icon": "circle",
+            "iconstyle": {
+                "color": "yellow",
+                "radius": 4
+            }
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [ -4.4214296, 36.73835 ]
+        }
+    }, {
+        "type": "Feature",
+        "properties": {
             "name": "car",
             "times": [
                 "2019-11-23 10:51:06",
@@ -53,6 +70,23 @@ geojson = {
                 [ -4.419239, 36.730686 ],
                 [ -4.417272, 36.732136 ],
             ]
+        }
+    }, {
+        "type": "Feature",
+        "properties": {
+            "name": "car destination point",
+            "times": [
+                "2019-11-23 11:00:06",
+            ],
+            "icon": "circle",
+            "iconstyle": {
+                "color": "black",
+                "radius": 4
+            }
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [ -4.417272, 36.732136 ]
         }
     }, {
         "type": "Feature",

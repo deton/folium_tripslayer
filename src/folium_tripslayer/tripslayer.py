@@ -30,7 +30,12 @@ class TripsLayer(TimestampedGeoJson):
             {{this._parent.get_name()}}.addControl(this.timeDimensionControl);
 
             var tripsLayer = L.timeDimension.layer.trips();
-            tripsLayer.addTripsLayers({{this._parent.get_name()}}, {{this.data}}, {{this.duration}});
+            tripsLayer.addTripsLayers(
+                {{ this._parent.get_name() }},
+                {{ this.data }},
+                {{ this.duration }},
+                {{ this.period|tojson }}
+            );
         {% endmacro %}
         """
     )  # noqa

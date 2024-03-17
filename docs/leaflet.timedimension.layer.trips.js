@@ -6,7 +6,7 @@
 L.timeDimension.layer.trips = function() {
     return { addTripsLayers };
 
-    function addTripsLayers(map, geojson, duration) {
+    function addTripsLayers(map, geojson, duration, period) {
         iconjson = {
             type: 'FeatureCollection',
             features: []
@@ -17,10 +17,12 @@ L.timeDimension.layer.trips = function() {
         };
         geojson.features.forEach(f => {
             if (f.properties.sliceStyles === undefined) {
+                //addIconPoints(iconjson, f);
                 iconjson.features.push(f);
                 linejson.features.push(f);
                 return;
             }
+            // convert string times to number [ms].
             // TODO: support 'coordTimes', etc.
             // cf. L.TimeDimension.Layer.GeoJson._getFeatureTimes()
             f.properties.times = f.properties.times.map(time => {
@@ -41,8 +43,8 @@ L.timeDimension.layer.trips = function() {
             //         "iconAnchor": [11, 11]
             //     }
             // }
-            // iconjson: convert index to time
-            const timeStyles = f.properties.sliceStyles.map(ss => {
+            // _timeStyles: convert index to time for iconjson.
+            const _timeStyles = f.properties.sliceStyles.map(ss => {
                 let endIdx = ss[1];
                 while (endIdx >= f.properties.times.length) {
                     endIdx -= 1;
@@ -57,10 +59,11 @@ L.timeDimension.layer.trips = function() {
                 type: 'Feature',
                 properties: {
                     ...f.properties,
-                    timeStyles,
+                    _timeStyles,
                 },
                 geometry: f.geometry,
             });
+            //addIconPoints(iconjson, f, _timeStyles);
 
             // linejson
             let idx = 0;
@@ -74,6 +77,37 @@ L.timeDimension.layer.trips = function() {
                 idx = ss[1] - 1;
             });
             slicePush(idx, f.geometry.coordinates.length, {});
+
+            /* XXX: To show only one point on the path without flicker,
+             * needs to extend L.TimeDimension.Layer.GeoJson.
+            function addIconPoints(iconjson, f, _timeStyles) {
+                if (f.geometry.type != 'LineString') {
+                    return; // XXX: only supports LineString
+                }
+                if (f.geometry.coordinates.length === 0) {
+                    return;
+                }
+                let props = f.properties;
+                if (_timeStyles) {
+                    props = {
+                        ...f.properties,
+                        _timeStyles,
+                    };
+                }
+                const points = f.geometry.coordinates.map((coord, idx) => ({
+                    type: 'Feature',
+                    properties: {
+                        ...props,
+                        times: [props.times[idx]],
+                    },
+                    geometry: {
+                        type: 'Point',
+                        coordinates: coord,
+                    }
+                }));
+                iconjson.features = iconjson.features.concat(points);
+            }
+            */
 
             function slicePush(startIdx, endIdx, overrideStyle) {
                 if (startIdx >= endIdx) {
@@ -101,66 +135,27 @@ L.timeDimension.layer.trips = function() {
         });
 
         var iconLayer = L.geoJson(iconjson, {
-            pointToLayer: function (feature, latLng) {
-                let iconstyle = feature.properties.iconstyle;
-                if (iconstyle && feature.properties.timeStyles) {
-                    //console.log(feature.properties.timeStyles);
-                    const cur = map.timeDimension.getCurrentTime();
-                    feature.properties.timeStyles.some(ts => {
-                        if (cur >= ts[0] && cur < ts[1]) {
-                            iconstyle = feature.properties[ts[2]].iconstyle;
-                            return true;
-                        }
-                    });
-                }
-                if (feature.properties.icon == 'marker') {
-                    if (iconstyle) {
-                        return new L.Marker(latLng, {
-                            icon: L.icon(iconstyle)
-                        });
-                    }
-                    return new L.Marker(latLng);
-                }
-                if (feature.properties.icon == 'circle') {
-                    if (iconstyle) {
-                        return new L.circleMarker(latLng, iconstyle);
-                    }
-                    return new L.circleMarker(latLng);
-                }
-                return new L.Marker(latLng);
-            },
+            pointToLayer,
             style: {
-                opacity: 0, // TODO: Use Point only
+                opacity: 0, // XXX: Show only point added by addlastPoint
             },
-            onEachFeature: function(feature, layer) {
-                if (feature.properties.popup) {
-                    layer.bindPopup(feature.properties.popup);
-                }
-                if (feature.properties.tooltip) {
-                    layer.bindTooltip(feature.properties.tooltip);
-                }
-            }
+            onEachFeature: bindPopupTooltip,
         });
         var lineLayer = L.geoJson(linejson, {
+            pointToLayer,
             style: function (feature) {
                 return feature.properties.style;
             },
-            onEachFeature: function(feature, layer) {
-                if (feature.properties.popup) {
-                    layer.bindPopup(feature.properties.popup);
-                }
-                if (feature.properties.tooltip) {
-                    layer.bindTooltip(feature.properties.tooltip);
-                }
-            }
+            onEachFeature: bindPopupTooltip,
         });
         // Show both layers: the lineD layer to show the whole track
         // and the iconD layer to show the movement of the icon 
         var iconDLayer = L.timeDimension.layer.geoJson(iconLayer, {
             updateTimeDimension: true,
+            //duration: period,
             duration: duration,
+            addlastPoint: true,
             updateTimeDimensionMode: 'replace',
-            addlastPoint: true
         });
         iconDLayer.addTo(map);
 
@@ -170,5 +165,43 @@ L.timeDimension.layer.trips = function() {
             updateTimeDimensionMode: 'replace',
         });
         lineDLayer.addTo(map);
+
+        function pointToLayer(feature, latLng) {
+            let iconstyle = feature.properties.iconstyle;
+            if (iconstyle && feature.properties._timeStyles) {
+                //console.log(feature.properties._timeStyles);
+                const cur = map.timeDimension.getCurrentTime();
+                feature.properties._timeStyles.some(ts => {
+                    if (cur >= ts[0] && cur < ts[1]) {
+                        iconstyle = feature.properties[ts[2]].iconstyle;
+                        return true;
+                    }
+                });
+            }
+            if (feature.properties.icon == 'marker') {
+                if (iconstyle) {
+                    return new L.Marker(latLng, {
+                        icon: L.icon(iconstyle)
+                    });
+                }
+                return new L.Marker(latLng);
+            }
+            if (feature.properties.icon == 'circle') {
+                if (iconstyle) {
+                    return new L.circleMarker(latLng, iconstyle);
+                }
+                return new L.circleMarker(latLng);
+            }
+            return new L.Marker(latLng);
+        }
+
+        function bindPopupTooltip(feature, layer) {
+            if (feature.properties.popup) {
+                layer.bindPopup(feature.properties.popup);
+            }
+            if (feature.properties.tooltip) {
+                layer.bindTooltip(feature.properties.tooltip);
+            }
+        }
     }
 };
