@@ -7,11 +7,11 @@ L.timeDimension.layer.trips = function() {
     return { addTripsLayers };
 
     function addTripsLayers(map, geojson, duration, period) {
-        iconjson = {
+        const iconjson = {
             type: 'FeatureCollection',
             features: []
         };
-        linejson = {
+        const linejson = {
             type: 'FeatureCollection',
             features: []
         };
