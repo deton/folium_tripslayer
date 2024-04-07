@@ -55,6 +55,8 @@ geojson = {
             "style": {
                 "color": "purple",
             },
+            "tooltip": "car",
+            "popup": "car",
         },
         "geometry": {
             "type": "LineString",
@@ -195,6 +197,6 @@ geojson = {
     }]
 }
 
-TripsLayer(geojson, loop=False, period="PT1M", duration="PT4M").add_to(m)
+TripsLayer(geojson, loop=False, period="PT1M", duration="PT4M", toggle_line=True).add_to(m)
 
 m.save('demo.html')
