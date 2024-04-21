@@ -16,9 +16,13 @@ L.timeDimension.layer.trips = function() {
             features: []
         };
         geojson.features.forEach(f => {
-            const opacity = {opacity: toggleLine ? 0 : 1};
+            const shared = { // shared object from linejson and iconjson
+                stroke: toggleLine ? false : true,
+                _layers: [],
+                _styles: [],
+            };
             if (f.properties.sliceStyles === undefined) {
-                f.properties._opacity = opacity;
+                f.properties._shared = shared;
                 //addIconPoints(iconjson, f);
                 iconjson.features.push(f);
                 linejson.features.push(f);
@@ -50,14 +54,14 @@ L.timeDimension.layer.trips = function() {
             let idx = 0;
             f.properties.sliceStyles.forEach(ss => {
                 if (ss[0] > idx) {
-                    slicePush(idx, ss[0], {}, opacity);
-                    slicePush(ss[0] - 1, ss[1], f.properties[ss[2]], opacity);
+                    slicePush(idx, ss[0], {}, shared);
+                    slicePush(ss[0] - 1, ss[1], f.properties[ss[2]], shared);
                 } else {
-                    slicePush(ss[0], ss[1], f.properties[ss[2]], opacity);
+                    slicePush(ss[0], ss[1], f.properties[ss[2]], shared);
                 }
                 idx = ss[1] - 1;
             });
-            slicePush(idx, f.geometry.coordinates.length, {}, opacity);
+            slicePush(idx, f.geometry.coordinates.length, {}, shared);
 
             // _timeStyles: convert index to time for iconjson.
             const _timeStyles = f.properties.sliceStyles.map(ss => {
@@ -76,7 +80,7 @@ L.timeDimension.layer.trips = function() {
                 properties: {
                     ...f.properties,
                     _timeStyles,
-                    _opacity: opacity, // opacity of peer line
+                    _shared: shared, // stroke of peer line
                 },
                 geometry: f.geometry,
             });
@@ -113,7 +117,7 @@ L.timeDimension.layer.trips = function() {
             }
             */
 
-            function slicePush(startIdx, endIdx, overrideStyle, opacity) {
+            function slicePush(startIdx, endIdx, overrideStyle, shared) {
                 if (startIdx >= endIdx) {
                     return;
                 }
@@ -129,7 +133,7 @@ L.timeDimension.layer.trips = function() {
                         ...f.properties,
                         ...overrideStyle,
                         times,
-                        _opacity: opacity,
+                        _shared: shared,
                     },
                     geometry: {
                         type: f.geometry.type,
@@ -142,13 +146,29 @@ L.timeDimension.layer.trips = function() {
         const lineLayer = L.geoJson(linejson, {
             pointToLayer,
             style: function (feature) {
-                if (!feature.properties._opacity || feature.properties._opacity.opacity) {
-                    return feature.properties.style;
+                if (!feature.properties._shared || feature.properties._shared.stroke) {
+                    return {stroke: true, ...feature.properties.style};
                 }
-                return feature.properties._opacity;
+                return {stroke: false};
             },
             onEachFeature: (feature, layer) => {
                 bindPopupTooltip(feature, layer);
+                feature.properties._shared._layers.push(layer); // TODO:remove
+                feature.properties._shared._styles.push(feature.properties.style);
+                feature.properties._shared._toggleFunc = () => {
+                    console.log('toggleFunc', feature.properties._shared._layers.length);
+                    feature.properties._shared.stroke = !feature.properties._shared.stroke;
+                    if (feature.properties._shared.stroke) { // show
+                        feature.properties._shared._layers.forEach((x, idx) => {
+                            const s = feature.properties._shared._styles[idx];
+                            x.setStyle({stroke: true, ...s});
+                        });
+                    } else { // hide
+                        feature.properties._shared._layers.forEach(x => {
+                            x.setStyle({stroke: false});
+                        });
+                    }
+                };
             },
         });
         // lineD layer to show the whole track
@@ -168,9 +188,8 @@ L.timeDimension.layer.trips = function() {
                 bindPopupTooltip(feature, layer);
                 if (toggleLine) {
                     layer.on('click', (ev) => {
-                        if (feature.properties._opacity) {
-                            feature.properties._opacity.opacity = feature.properties._opacity.opacity ? 0 : 1;
-                            // TODO: immediately update view (layer.setStyle?)
+                        if (feature.properties._shared) {
+                            feature.properties._shared._toggleFunc();
                         }
                     });
                 }
