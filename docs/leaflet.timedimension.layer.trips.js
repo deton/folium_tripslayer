@@ -7,6 +7,7 @@ L.timeDimension.layer.trips = function() {
     return { addTripsLayers };
 
     function addTripsLayers(map, geojson, duration, period, toggleLine) {
+        let layerid = 0;
         const iconjson = {
             type: 'FeatureCollection',
             features: []
@@ -18,8 +19,7 @@ L.timeDimension.layer.trips = function() {
         geojson.features.forEach(f => {
             const shared = { // shared object from linejson and iconjson
                 stroke: toggleLine ? false : true,
-                _layers: [],
-                _styles: [],
+                layers: {},
             };
             if (f.properties.sliceStyles === undefined) {
                 f.properties._shared = shared;
@@ -153,22 +153,13 @@ L.timeDimension.layer.trips = function() {
             },
             onEachFeature: (feature, layer) => {
                 bindPopupTooltip(feature, layer);
-                feature.properties._shared._layers.push(layer); // TODO:remove
-                feature.properties._shared._styles.push(feature.properties.style);
-                feature.properties._shared._toggleFunc = () => {
-                    console.log('toggleFunc', feature.properties._shared._layers.length);
-                    feature.properties._shared.stroke = !feature.properties._shared.stroke;
-                    if (feature.properties._shared.stroke) { // show
-                        feature.properties._shared._layers.forEach((x, idx) => {
-                            const s = feature.properties._shared._styles[idx];
-                            x.setStyle({stroke: true, ...s});
-                        });
-                    } else { // hide
-                        feature.properties._shared._layers.forEach(x => {
-                            x.setStyle({stroke: false});
-                        });
-                    }
-                };
+                layerid += 1;
+                layer.once('remove', (ev) => {
+                    const delId = ev.target._tripsLayerId;
+                    delete feature.properties._shared.layers[delId];
+                });
+                layer._tripsLayerId = layerid;
+                feature.properties._shared.layers[layerid] = layer;
             },
         });
         // lineD layer to show the whole track
@@ -188,9 +179,7 @@ L.timeDimension.layer.trips = function() {
                 bindPopupTooltip(feature, layer);
                 if (toggleLine) {
                     layer.on('click', (ev) => {
-                        if (feature.properties._shared) {
-                            feature.properties._shared._toggleFunc();
-                        }
+                        toggleFunc(feature.properties._shared);
                     });
                 }
             },
@@ -204,6 +193,19 @@ L.timeDimension.layer.trips = function() {
             updateTimeDimensionMode: 'replace',
         });
         iconDLayer.addTo(map);
+
+        function toggleFunc(shared) {
+            shared.stroke = !shared.stroke;
+            if (shared.stroke) { // show
+                Object.values(shared.layers).forEach(x => {
+                    x.setStyle({stroke: true, ...x.feature.properties.style});
+                });
+            } else { // hide
+                Object.values(shared.layers).forEach(x => {
+                    x.setStyle({stroke: false});
+                });
+            }
+        }
 
         function pointToLayer(feature, latLng) {
             let iconstyle = feature.properties.iconstyle;
