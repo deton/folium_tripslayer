@@ -35,7 +35,8 @@ class TripsLayer(TimestampedGeoJson):
                 {{ this.data }},
                 {{ this.duration }},
                 {{ this.period|tojson }},
-                {{ this.toggle_line|tojson }}
+                {{ this.toggle_line|tojson }},
+                {{ this.hide_line_on_init|tojson }}
             );
         {% endmacro %}
         """
@@ -83,6 +84,7 @@ class TripsLayer(TimestampedGeoJson):
         duration="PT4M",
         speed_slider=True,
         toggle_line=False,
+        hide_line_on_init=False,
     ):
         super().__init__(
             data,
@@ -101,3 +103,4 @@ class TripsLayer(TimestampedGeoJson):
         )
         self._name = "TripsLayer"
         self.toggle_line = toggle_line
+        self.hide_line_on_init = hide_line_on_init

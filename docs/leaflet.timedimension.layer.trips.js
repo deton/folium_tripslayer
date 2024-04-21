@@ -6,7 +6,7 @@
 L.timeDimension.layer.trips = function() {
     return { addTripsLayers };
 
-    function addTripsLayers(map, geojson, duration, period, toggleLine) {
+    function addTripsLayers(map, geojson, duration, period, toggleLine, hideLineOnInit) {
         let layerid = 0;
         const iconjson = {
             type: 'FeatureCollection',
@@ -18,7 +18,7 @@ L.timeDimension.layer.trips = function() {
         };
         geojson.features.forEach(f => {
             const shared = { // shared object from linejson and iconjson
-                stroke: toggleLine ? false : true,
+                stroke: hideLineOnInit ? false : true,
                 layers: {},
             };
             if (f.properties.sliceStyles === undefined) {

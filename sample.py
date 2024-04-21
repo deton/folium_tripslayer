@@ -197,6 +197,6 @@ geojson = {
     }]
 }
 
-TripsLayer(geojson, loop=False, period="PT1M", duration="PT4M", toggle_line=True).add_to(m)
+TripsLayer(geojson, loop=False, period="PT1M", duration="PT4M", toggle_line=True, hide_line_on_init=True).add_to(m)
 
 m.save('demo.html')
