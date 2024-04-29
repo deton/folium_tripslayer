@@ -160,6 +160,11 @@ L.timeDimension.layer.trips = function() {
                 });
                 layer._tripsLayerId = layerid;
                 feature.properties._shared.layers[layerid] = layer;
+                if (toggleLine) {
+                    layer.on('click', (ev) => {
+                        toggleFunc(feature.properties._shared);
+                    });
+                }
             },
         });
         // lineD layer to show the whole track
